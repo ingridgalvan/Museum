@@ -19,10 +19,7 @@
   <ol>
     <li>
       <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li></li>
-      </ul>
-    </li>
+     </li>
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
@@ -31,7 +28,6 @@
       </ul>
     </li>
     <li><a href="#screenshots">Screenshots</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -75,21 +71,9 @@ You will have to download.
    http://localhost/
    ```
 
-
 ## Screenshots
 ![Product Name Screen Shot][screenshot01]
 ![Product Name Screen Shot][screenshot02]
-![Product Name Screen Shot][screenshot03]
-
-
-
-
-<!-- ROADMAP -->
-## Roadmap
-
-See the [open issues](https://github.com/ingridgalvan/museum/issues) for a list of proposed features (and known issues).
-
-
 
 <!-- CONTRIBUTING -->
 ## Contributing
