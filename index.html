@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="keywords" content="HTML, JavaScript, a-frame">
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+ <script src="https://unpkg.com/aframe-environment-component@1.3.0/dist/aframe-environment-component.min.js"></script>
+  <script src="https://cdn.rawgit.com/mrturck/aframe-joystick/master/joystick.min.js"></script>
+  <script src="https://cdn.rawgit.com/donmccurdy/aframe-physics-system/v4.0.1/dist/aframe-physics-system.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.0/dist/aframe-extras.min.js"></script>
+  <script src="https://unpkg.com/aframe-simple-sun-sky@^1.2.2/simple-sun-sky.js"></script>
+  <script src="https://cdn.rawgit.com/lmalave/aframe-speech-command-component/master/dist/aframe-speech-command-component.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aframe-animation-component@6.1.2/dist/aframe-animation-component.min.js"></script>
+
+   <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM completamente cargado e inicializado.');
+    });
+
+    AFRAME.registerComponent('collider-check', {
+      dependencies: ['raycaster'],
+      init: function () {
+        var debugtxt = document.querySelector('#debugtxt');
+        var self = this;
+        this.previousPosition = new THREE.Vector3();
+        this.el.object3D.getWorldPosition(this.previousPosition);
+        this.isTextDisplayed = false;
+
+        this.el.addEventListener('raycaster-intersection', function (e) {
+          self.selectedObj = e.detail.els[0];
+          if (self.selectedObj && self.selectedObj.id === 'pared' && self.isMoving()) {
+            self.preventMovement();
+          }
+        });
+
+        this.el.addEventListener('raycaster-intersection-cleared', function () {
+          self.selectedObj = null;
+        });
+
+        this.el.addEventListener('triggerdown', function () {
+          if (!self.selectedObj || self.isTextDisplayed) return;
+
+          const id = self.selectedObj.id;
+
+          if (id === 'dinosaurio') {
+            debugtxt.setAttribute('value', 'Triceratops');
+            self.isTextDisplayed = true;
+
+            self.selectedObj.setAttribute('animation-mixer', {
+              clip: '*',
+              loop: 'repeat',
+              clampWhenFinished: false
+            });
+
+            self.selectedObj.components.sound.playSound();
+
+            setTimeout(() => {
+              debugtxt.setAttribute('value', '');
+              self.isTextDisplayed = false;
+            }, 5000);
+          } 
+          else if (id === 'nefertiti') {
+            debugtxt.setAttribute('value', 'Nefertiti');
+            self.isTextDisplayed = true;
+            self.selectedObj.components.sound.playSound();
+
+            setTimeout(() => {
+              debugtxt.setAttribute('value', '');
+              self.isTextDisplayed = false;
+            }, 5000);
+          } else if (id === 'sunstone') {
+            debugtxt.setAttribute('value', 'sunstone');
+            self.isTextDisplayed = true;
+            self.selectedObj.components.sound.playSound();
+
+            setTimeout(() => {
+              debugtxt.setAttribute('value', '');
+              self.isTextDisplayed = false;
+            }, 5000);
+          } 
+            else if (id === 'porcelana') {
+            debugtxt.setAttribute('value', 'Vasija de porcelana China');
+            self.isTextDisplayed = true;
+            self.selectedObj.components.sound.playSound();
+
+            setTimeout(() => {
+              debugtxt.setAttribute('value', '');
+              self.isTextDisplayed = false;
+            }, 5000);
+          }   
+          else if (id === 'botezamora') {
+           debugtxt.setAttribute('value', 'Bote de Zamora');
+            self.isTextDisplayed = true;
+
+            self.selectedObj.setAttribute('animation-mixer', {
+              clip: '*',
+              loop: 'repeat',
+              clampWhenFinished: false
+            });
+
+            self.selectedObj.components.sound.playSound();
+
+            setTimeout(() => {
+              debugtxt.setAttribute('value', '');
+              self.isTextDisplayed = false;
+            }, 5000);
+          }           
+          else if (id === 'tlaloc') {
+            debugtxt.setAttribute('value', 'Tlaloc');
+            self.isTextDisplayed = true;
+            self.selectedObj.components.sound.playSound();
+
+            setTimeout(() => {
+              debugtxt.setAttribute('value', '');
+              self.isTextDisplayed = false;
+            }, 5000);
+          }
+        });
+      },
+      isMoving: function () {
+        var currentPosition = new THREE.Vector3();
+        this.el.object3D.getWorldPosition(currentPosition);
+        var distance = this.previousPosition.distanceTo(currentPosition);
+        this.previousPosition.copy(currentPosition);
+        return distance > 0.01;
+      },
+      preventMovement: function () {
+        var playerEl = document.querySelector('#jugador');
+        var playerPosition = playerEl.getAttribute('position');
+        var direction = new THREE.Vector3();
+        this.el.object3D.getWorldDirection(direction);
+        direction.y = 0;
+        direction.normalize();
+
+        var movementDistance = 0.7;
+        var newPosition = { ...playerPosition };
+
+        if (this.el.id === 'raycaster-left') newPosition.x -= movementDistance;
+        else if (this.el.id === 'raycaster-right') newPosition.x += movementDistance;
+        else if (this.el.id === 'raycaster-front') newPosition.z -= movementDistance;
+        else if (this.el.id === 'raycaster-back') newPosition.z += movementDistance;
+
+        if (this.isRepositioning) return;
+        this.isRepositioning = true;
+
+        playerEl.setAttribute('animation', {
+          property: 'position',
+          to: `${newPosition.x} ${newPosition.y} ${newPosition.z}`,
+          dur: 200,
+          easing: 'easeOutQuad'
+        });
+
+        setTimeout(() => { this.isRepositioning = false; }, 200);
+      }
+    });
+
+    AFRAME.registerComponent('generate-walls', {
+      init: function () {
+        const sceneEl = this.el;
+        const matrix = [
+          [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+          [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+          [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+          [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+          [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+          [1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1],
+          [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+          [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+          [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+          [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+          [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+          [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+          [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+          [1,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+          [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+          [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+          [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        const boxWidth = 2;
+        const wallHeight = 10;
+        const boxDepth = 2;
+        const boxSize = 2;
+
+        matrix.forEach((row, rowIndex) => {
+          row.forEach((cell, colIndex) => {
+            if (cell === 1) {
+              const wall = document.createElement('a-box');
+              wall.setAttribute('position', { x: colIndex*boxSize, y: wallHeight/2, z: -rowIndex*boxSize });
+              wall.setAttribute('scale', { x: boxWidth, y: wallHeight, z: boxDepth });
+              wall.setAttribute('class', 'collidable');
+              wall.setAttribute('id', 'pared');
+              wall.setAttribute('material', { 
+                shader: 'standard',
+                src: '#pared-textura',
+                repeat: '1 3',
+                wrap: 'repeat',
+                metalness: 0.05,
+                roughness: 1
+              });
+              sceneEl.appendChild(wall);
+            } else if (cell === 7) {
+              const player = document.querySelector('#jugador');
+              player.setAttribute('position', { x: colIndex*boxSize, y:1, z:-rowIndex*boxSize });
+            }
+          });
+        });
+
+        const ceiling = document.createElement('a-box');
+        ceiling.setAttribute('position', { 
+          x: (matrix[0].length*boxSize)/2, 
+          y: wallHeight + 0.1, 
+          z: -(matrix.length*boxSize)/2 
+        });
+        ceiling.setAttribute('scale', { 
+          x: matrix[0].length*boxSize, 
+          y: 0.2, 
+          z: matrix.length*boxSize 
+        });
+        ceiling.setAttribute('material', { 
+          src: '#techo-textura', 
+          repeat: `${matrix[0].length} ${matrix.length}` 
+        });
+        sceneEl.appendChild(ceiling);
+      }
+    });
+
+    AFRAME.registerComponent('log-position', {
+      tick: function () {
+        const position = this.el.getAttribute('position');
+        console.log(`Player position: x=${position.x}, y=${position.y}, z=${position.z}`);
+      }
+    });
+  </script>
+</head>
+<body>
+  <a-scene joystick generate-walls>
+    <a-assets>
+      <audio id="thunk" src="https://cdn.glitch.global/8d6a7bb6-a17f-4f7d-9afa-8706c4c3d611/thunk.wav?v=1645625236410"></audio>
+      <audio id="dino-sound" src="audio/Dinosaur.mp3"></audio>
+      <audio id="nefertiti-sound" src="audio/Nefertiti.mp3"></audio>
+      <audio id="sunstone-sound" src="audio/sunstone.mp3"></audio>
+       <audio id="tlaloc-sound" src="audio/tlaloc.mp3"></audio>
+         <audio id="porcelana-sound" src="audio/porcelana.mp3"></audio>
+      <audio id="botezamora-sound" src="audio/botezamora.mp3"></audio>
+      <img id="pared-textura" src="imagenes/fondopared.jpg">
+       <img id="techo-textura" src="imagenes/texturatecho.png"> <!-- Nueva textura -->
+       <img id="piso-textura" src="imagenes/fondo-de-suelo-con-textura-de-madera-beige.jpg">
+    </a-assets>
+ <!-- luz ambiental -->
+    <a-light type="directional" position="0 1 0" intensity="0.2" color="#ffffff"></a-light>
+    <a-light type="ambient" intensity="0.9" color="#ffffff"></a-light>
+
+
+ <!-- lámpara en el techo -->
+<a-entity position="13 8 -10" rotation="-90 0 0">
+  <a-light type="spot"
+           intensity="7"
+           angle="60"
+           distance="85"
+           penumbra="0.5"
+           color="#ffffff">
+  </a-light>
+  <!-- bombilla visible en el techo -->
+  <a-sphere radius="0.1"
+            color="#fffbe6"
+            emissive="#fffccc"
+            position="0 0 0">
+  </a-sphere>
+</a-entity>
+
+<a-entity position="23 8 -10" rotation="-90 0 0">
+  <a-light type="spot"
+           intensity="7"
+           angle="60"
+           distance="85"
+           penumbra="0.5"
+           color="#ffffff">
+  </a-light>
+  <!-- bombilla visible en el techo -->
+  <a-sphere radius="0.1"
+            color="#fffbe6"
+            emissive="#fffccc"
+            position="0 0 0">
+  </a-sphere>
+</a-entity>
+
+<a-entity position="13 8 -24" rotation="-90 0 0">
+  <a-light type="spot"
+           intensity="7"
+           angle="60"
+           distance="85"
+           penumbra="0.5"
+           color="#ffffff">
+  </a-light>
+  <!-- bombilla visible en el techo -->
+  <a-sphere radius="0.1"
+            color="#fffbe6"
+            emissive="#fffccc"
+            position="0 0 0">
+  </a-sphere>
+</a-entity>
+
+<a-entity position="23 8 -24" rotation="-90 0 0">
+  <a-light type="spot"
+           intensity="7"
+           angle="60"
+           distance="85"
+           penumbra="0.5"
+           color="#ffffff">
+  </a-light>
+  <!-- bombilla visible en el techo -->
+  <a-sphere radius="0.1"
+            color="#fffbe6"
+            emissive="#fffccc"
+            position="0 0 0">
+  </a-sphere>
+</a-entity>
+
+<a-entity position="34.5 8 -21" rotation="-90 0 0">
+  <a-light type="spot"
+           intensity="3"
+           angle="60"
+           distance="85"
+           penumbra="0.5"
+           color="#ffffff">
+  </a-light>
+  <!-- bombilla visible en el techo -->
+  <a-sphere radius="0.1"
+            color="#fffbe6"
+            emissive="#fffccc"
+            position="0 0 0">
+  </a-sphere>
+</a-entity>
+
+<a-entity position="2.7 8 -19" rotation="-90 0 0">
+  <a-light type="spot"
+           intensity="3"
+           angle="60"
+           distance="85"
+           penumbra="0.5"
+           color="#ffffff">
+  </a-light>
+  <!-- bombilla visible en el techo -->
+  <a-sphere radius="0.1"
+            color="#fffbe6"
+            emissive="#fffccc"
+            position="0 0 0">
+  </a-sphere>
+</a-entity>
+  <!-- Plano de piso-->
+    <a-plane 
+  rotation="-90 0 0" 
+  position="20 0 -20" 
+  width="100" 
+  height="100" 
+  material="shader: standard; src: #piso-textura; repeat: 8 8; metalness: 0.2; roughness: 0.8"
+  static-body>
+</a-plane>
+  <!-- <a-grid static-body width='300' depth='300' height='300' material="src: url(); color=black repeat: 200 200;"></a-grid>-->
+    <a-sky src="url(imagenes/skydome.png)"></a-sky>
+
+     
+    <!-- Models -->
+<a-entity id="dinosaurio"
+          class="collidable"
+          gltf-model="url(models/Dinosaurio/triceratop.glb)"
+          sound="src: #dino-sound; autoplay: false; positional: true"
+          position="18 0 -18"
+          scale="1 1 1"
+          rotation="0 -180 0">
+</a-entity>
+  
+    <a-entity gltf-model="url(models/Nefertiti/nefertitis_bust_like_in_the_museum.glb)" class="collidable"
+      position="1.8 0.7 -24" scale="2.5 2.5 2.5" rotation="0 -180 0" id="nefertiti"
+       sound="src: #nefertiti-sound; autoplay: false; positional: true" 
+      animation="property: position; to: 1.8 1 -24; dir: alternate; dur: 2000; loop: true;">
+    </a-entity>
+
+    <a-entity id="botezamora"
+          class="collidable"
+          gltf-model="url(models/Botezamora/bote_de_subh__bote_de_zamora.glb)"
+          sound="src: #botezamora-sound; autoplay: false; positional: true"
+          position="32 0.6 -27"
+          scale="5 5 5"
+          rotation="0 -90 0">
+    </a-entity>
+
+    <a-entity gltf-model="url(models/Tlaloc/tlaloc.glb)" class="collidable"
+      position="3 -1 -14" scale="0.1 0.1 0.1" rotation="0 -270 0" id="tlaloc"
+       sound="src: #tlaloc-sound; autoplay: false; positional: true">
+    </a-entity>
+  
+<a-entity gltf-model="url(models/SunStone/copy_of_aztec_sun_stone_museo_nacioanal.glb)" class="collidable"
+      position="34.5 1.1 -14" scale="10 10 10" rotation="90 180 0" id="sunstone"
+       sound="src: #sunstone-sound; autoplay: false; positional: true" 
+      animation="property: position; to: 34.5 1.4 -14; dir: alternate; dur: 2000; loop: true;">
+    </a-entity>
+
+    <a-entity gltf-model="url(models/vasijachina/porcelain_china_vase.glb)" class="collidable"
+      position="4 0 -5" scale="0.08 0.08 0.08" rotation="0 180 0" id="porcelana"
+       sound="src: #porcelana-sound; autoplay: false; positional: true" >
+    </a-entity>
+
+
+    <!-- Models no interactivos -->
+<a-entity gltf-model="url(models/lamparas/pekin.glb)"
+      class="collidable"
+      position="13 8 -10" 
+      scale="0.02 0.02 0.02" 
+      rotation="0 0 0" 
+      id="lampara">
+    </a-entity>
+    <a-entity gltf-model="url(models/lamparas/pekin.glb)"
+      class="collidable"
+      position="23 8 -10" 
+      scale="0.02 0.02 0.02" 
+      rotation="0 0 0" 
+      id="lampara">
+    </a-entity>
+<a-entity gltf-model="url(models/lamparas/pekin.glb)"
+      class="collidable"
+      position="13 8 -24" 
+      scale="0.02 0.02 0.02" 
+      rotation="0 0 0" 
+      id="lampara">
+    </a-entity>
+    <a-entity gltf-model="url(models/lamparas/pekin.glb)"
+      class="collidable"
+      position="23 8 -24" 
+      scale="0.02 0.02 0.02" 
+      rotation="0 0 0" 
+      id="lampara">
+    </a-entity>
+
+<a-entity gltf-model="url(models/Pedestales/small_museum_display_case.glb)" class="collidable"
+      position="3 0 -24" scale="1 0.5 1" rotation="0 0 0" id="pedestal">
+    </a-entity>
+
+    <a-entity gltf-model="url(models/Pedestales/small_museum_display_case.glb)" class="collidable"
+      position="32 0 -27" scale="1 0.5 1" rotation="0 0 0" id="pedestal">
+    </a-entity>
+
+ <a-entity gltf-model="url(models/Pedestales/small_museum_display_case.glb)" class="collidable"
+      position="32 0 -14" scale="1 0.5 1" rotation="0 0 0" id="pedestal">
+    </a-entity>
+
+    <a-plane src="#pinturaImg"
+         position="2 4 -19"
+         width="4" height="2.5"
+         rotation="0 -270 0">
+</a-plane>
+<a-assets>
+  <img id="pinturaImg" src="imagenes/pintura2.jpeg">
+</a-assets>
+    
+    <a-plane src="#pinturaImg2"
+         position="20 4.2 -2"
+         width="8" height="5"
+         rotation="0 -180 0">
+</a-plane>
+<a-assets>
+  <img id="pinturaImg2" src="imagenes/pintura3.jpg">
+</a-assets>
+
+<a-plane src="#pinturaImg3"
+         position="34.5 3 -21"
+         width="6" height="3.5"
+         rotation="0 -90 0">
+</a-plane>
+<a-assets>
+  <img id="pinturaImg3" src="imagenes/pintura4.jpg">
+</a-assets>
+    
+<a-plane src="#pinturaImg4"
+         position="34.5 3 -5"
+         width="3" height="4"
+         rotation="0 -90 0">
+</a-plane>
+<a-assets>
+  <img id="pinturaImg4" src="imagenes/pintura5.jpeg">
+</a-assets>
+    
+
+
+    <!-- Jugador -->
+    <a-entity id="jugador" position="0.02 0.05 0.02" rotation="0 180 0" scale="0.1 0.1 0.1" movement-controls log-position>
+      <a-entity id="vista" camera position="0 0.5 0" look-controls="enabled: true">
+         <a-text id="debugtxt" value="Bienvenido al Museo" position="0 0 -2" align="center" scale="0.4 0.8 0.4"></a-text>
+      </a-entity>
+
+      <!-- Controles de mano -->
+      <a-entity oculus-touch-controls="hand: left" collider-check raycaster="objects: .collidable; showLine: true; far: 7"></a-entity>
+      <a-entity oculus-touch-controls="hand: right" collider-check raycaster="objects: .collidable; showLine: true; far: 7"></a-entity>
+
+      <!-- Raycasters -->
+      <a-entity id="raycaster-front" raycaster="objects: .collidable; direction: 0 0 -1; showLine: true; far: 0.3" collider-check></a-entity>
+      <a-entity id="raycaster-back" raycaster="objects: .collidable; direction: 0 0 1; showLine: true; far: 0.3" collider-check></a-entity>
+      <a-entity id="raycaster-left" raycaster="objects: .collidable; direction: -1 0 0; showLine: true; far: 0.3" collider-check></a-entity>
+      <a-entity id="raycaster-right" raycaster="objects: .collidable; direction: 1 0 0; showLine: true; far: 0.3" collider-check></a-entity>
+    </a-entity>
+  </a-scene>
+  </body>
+</html>
+
